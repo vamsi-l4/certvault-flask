@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 
 load_dotenv()
 
@@ -13,12 +13,13 @@ CORS(app)
 
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
 client = MongoClient(MONGO_URI)
-db = client['certvault']
+db = client['rediron']
 certificates_collection = db['certificates']
 
 @app.route('/api/certs', methods=['POST'])
 def create_cert():
     try:
+        print("Raw request data:", request.data)
         data = request.get_json()
         print("Received data:", data)
         title = data.get('title')
@@ -37,7 +38,7 @@ def create_cert():
             'publicUrl': public_url,
             'shortId': short_id,
             'verified': False,
-            'createdAt': datetime.utcnow()
+            'createdAt': datetime.now(timezone.utc)
         }
         result = certificates_collection.insert_one(cert)
         cert['_id'] = str(result.inserted_id)
